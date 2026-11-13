@@ -4,3 +4,5 @@ __pycache__/
 venv/
 *.macro.json
 .pytest_cache/
+build/
+dist/

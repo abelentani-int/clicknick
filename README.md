@@ -45,6 +45,25 @@ python main.py
 2. Press **Play (F10)** or hit `F10` to replay the recorded macro.
 3. Use **File > Save** to store the macro as a `.macro.json` file.
 
+## Packaging a standalone .exe
+
+To let someone run ClickNick on Windows without installing Python:
+
+```powershell
+.venv\Scripts\activate
+pip install -r requirements-dev.txt
+pyinstaller --onefile --windowed --name ClickNick main.py
+```
+
+The result is `dist\ClickNick.exe` — a single file with no dependencies.
+Zip it (or just copy the `.exe`) and send it over; double-clicking it runs
+the app directly.
+
+Since the `.exe` isn't code-signed, Windows SmartScreen or antivirus may show
+an "unknown publisher" warning the first time it runs on another machine —
+that's expected for an unsigned build, not a sign of a problem. The person
+running it can click "More info" > "Run anyway".
+
 ## Project layout
 
 ```
