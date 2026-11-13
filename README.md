@@ -14,12 +14,25 @@ commercial product.
 
 ## Features
 
-- Record mouse moves, clicks and scroll wheel
-- Record keyboard key down/up
+- Record mouse moves, clicks, scroll wheel and keyboard input
 - Global hotkeys: `F9` start/stop recording, `F10` start/stop playback
 - Adjustable playback speed and loop count (0 = infinite)
-- Command list view of the recorded macro, with delete-selected support
+- Build or edit macros by hand from the sidebar, without recording:
+  mouse click, key press, type text, wait, open program, open website,
+  focus window, clipboard read/write, variables, comments
+- Image recognition commands: click image, wait for image, find image —
+  capture a reference region straight from the screen and the player will
+  locate it later and act on it
+- `Loop` and `If` are containers: they nest their own list of commands
+  (shown as expandable branches in the tree), so macros can repeat a block
+  or branch on a variable/clipboard value or an on-screen image
+- Command tree view of the macro (recorded steps and hand-built blocks
+  mixed freely), with delete-selected support
 - Save / Open macros as JSON
+
+Select a row before inserting a new command and it's added right after
+that row, in the same list. Select a block's "Repeat:"/"Then:"/"Else:"
+branch label to insert as the first item inside that block.
 
 ## Requirements
 
@@ -68,10 +81,17 @@ running it can click "More info" > "Run anyway".
 
 ```
 clicknick_app/
-  events.py    # serialization between pynput objects and JSON-safe dicts
-  recorder.py  # captures global mouse/keyboard events with timestamps
-  player.py    # replays events with speed/loop control on a background thread
-  storage.py   # save/load macros as JSON
-  app.py       # Tkinter GUI
-main.py        # entry point
+  events.py        # serialization between pynput objects and JSON-safe dicts
+  recorder.py      # captures global mouse/keyboard events into a command list
+  commands.py      # describe()/nesting helpers shared by the tree view and player
+  player.py        # recursive interpreter: runs flat + loop/if command trees
+  variables.py      # {name} substitution and the variable store
+  clipboard.py      # ctypes Windows clipboard access (thread-safe, no Tk)
+  window_utils.py  # ctypes window focusing by title substring
+  vision.py        # screen capture + template matching for image commands
+  capture.py       # interactive drag-to-select screen region -> reference PNG
+  dialogs.py       # generic "insert command" form builder
+  storage.py       # save/load macros as JSON
+  app.py           # Tkinter GUI: toolbar, sidebar, command tree
+main.py            # entry point
 ```

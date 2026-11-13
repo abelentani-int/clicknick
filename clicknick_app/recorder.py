@@ -1,4 +1,9 @@
-"""Captures global mouse and keyboard activity into a list of timed events."""
+"""Captures global mouse and keyboard activity into a flat list of commands.
+
+Each recorded command carries a "delay": seconds to wait after the previous
+command finished before this one runs. This is the same field manually
+inserted commands use, so recorded and hand-built steps mix freely.
+"""
 
 import time
 
@@ -13,35 +18,38 @@ class Recorder:
     def __init__(self, stop_key=None):
         self.events = []
         self.stop_key = stop_key
-        self._start_time = None
-        self._last_move_time = 0.0
+        self._last_event_time = None
+        self._last_move_time = None
         self._mouse_listener = None
         self._keyboard_listener = None
         self.recording = False
 
-    def _now(self):
-        return time.perf_counter() - self._start_time
+    def _delay(self):
+        now = time.perf_counter()
+        delay = 0.0 if self._last_event_time is None else now - self._last_event_time
+        self._last_event_time = now
+        return delay
 
     def _on_move(self, x, y):
         if not self.recording:
             return
-        now = self._now()
-        if now - self._last_move_time < MOVE_SAMPLE_INTERVAL:
+        now = time.perf_counter()
+        if self._last_move_time is not None and now - self._last_move_time < MOVE_SAMPLE_INTERVAL:
             return
         self._last_move_time = now
-        self.events.append({"t": now, "type": "move", "x": x, "y": y})
+        self.events.append({"type": "move", "x": x, "y": y, "delay": self._delay()})
 
     def _on_click(self, x, y, button, pressed):
         if not self.recording:
             return
         self.events.append(
             {
-                "t": self._now(),
                 "type": "click",
                 "x": x,
                 "y": y,
                 "button": ev.button_to_str(button),
                 "pressed": pressed,
+                "delay": self._delay(),
             }
         )
 
@@ -49,23 +57,23 @@ class Recorder:
         if not self.recording:
             return
         self.events.append(
-            {"t": self._now(), "type": "scroll", "x": x, "y": y, "dx": dx, "dy": dy}
+            {"type": "scroll", "x": x, "y": y, "dx": dx, "dy": dy, "delay": self._delay()}
         )
 
     def _on_key_down(self, key):
         if not self.recording or key == self.stop_key:
             return
-        self.events.append({"t": self._now(), "type": "key_down", "key": ev.key_to_str(key)})
+        self.events.append({"type": "key_down", "key": ev.key_to_str(key), "delay": self._delay()})
 
     def _on_key_up(self, key):
         if not self.recording or key == self.stop_key:
             return
-        self.events.append({"t": self._now(), "type": "key_up", "key": ev.key_to_str(key)})
+        self.events.append({"type": "key_up", "key": ev.key_to_str(key), "delay": self._delay()})
 
     def start(self):
         self.events = []
-        self._start_time = time.perf_counter()
-        self._last_move_time = 0.0
+        self._last_event_time = None
+        self._last_move_time = None
         self.recording = True
         self._mouse_listener = mouse.Listener(
             on_move=self._on_move, on_click=self._on_click, on_scroll=self._on_scroll

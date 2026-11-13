@@ -28,6 +28,16 @@ def str_to_button(value):
     return mouse.Button[value]
 
 
+def key_label(value):
+    """Short human-readable label for a key_to_str() value."""
+    kind, _, payload = value.partition(":")
+    if kind == "char":
+        return payload
+    if kind == "vk":
+        return f"VK {payload}"
+    return payload
+
+
 def describe(event):
     """Human-readable one-line summary for the command list UI."""
     t = event["type"]
